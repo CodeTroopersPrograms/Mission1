@@ -6,6 +6,7 @@ from pybricks.parameters import Port, Stop, Direction, Button, Color
 from pybricks.tools import wait, StopWatch, DataLog
 from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
+import threading
 
 
 # This program requires LEGO EV3 MicroPython v2.0 or higher.
@@ -20,7 +21,7 @@ ext_dr = Motor(Port.A)
 ext_st = Motor(Port.D)
 robot = DriveBase(left_wheel, right_wheel, wheel_diameter = 50, axle_track = 110)
 gyro = GyroSensor(Port.S3)
-color1 = ColorSensor(Port.S1)
+#color1 = ColorSensor(Port.S1)
 color2 = ColorSensor(Port.S2)
 
 
@@ -32,7 +33,7 @@ robot.settings(550, 550, 180, 180)
 
 #Functions
 
-def get_filtered_angle(gyro, samples = 5):
+def get_filtered_angle(gyro, samples = 3):
     angles = []
     for _ in range(samples):
         angles.append(gyro.angle())
@@ -48,7 +49,7 @@ def Turn(degrees):
         filter_angle = get_filtered_angle(gyro)
         
         # Calculeaza eroarea
-        error = degrees - filter_angle
+        error = filter_angle - degrees
         
         # Opreste cand ajunge la unghiul dorit
         if abs(error) < 1.75:
@@ -56,34 +57,43 @@ def Turn(degrees):
             break
         
         # Ajusteaza viteza
-        turn_speed = error * 3.5  
+        turn_speed = error * 3 
         robot.drive(0, turn_speed)  # Ajusteaza rotirea bazat pe eroare
 
     gyro.reset_angle(0)
     
 def Forward(distance, speed):
     while abs(robot.distance()) <= abs(distance):
-        corectie = 0 - gyro.angle() # de testat daca functioneaza
-        robot.drive(speed, corectie)
+        #corectie = 0 - gyro.angle() # de testat daca functioneaza
+        robot.drive(speed, 0)
     robot.stop()
     left_wheel.brake()
     right_wheel.brake()
     robot.reset()
+    gyro.reset_angle(0)
 
-    
 
 # Write your program here.
 ev3.speaker.beep()
 gyro.reset_angle(0)
 robot.reset()
 
-
-ext_st.run_angle(400, 360)
-
-
+t1 = threading.Thread(target = Forward, args = (100, 150))
+t2 = threading.Thread(target = ext_st.run_angle, args = (500, 360))
 
 
-
-
-
-
+Forward(100,300)
+Turn(-55)
+Forward(350, 300)
+wait(500)
+Forward(150,-300)
+Turn(43)
+ext_dr.run_angle(500,320)
+Forward(350,250)
+Turn(50)
+Forward(60, 300)
+ext_dr.run_angle(500,-320)
+Forward(60, -320)
+Turn(71)
+robot.straight(45)
+ext_st.run_angle(1000, 320)
