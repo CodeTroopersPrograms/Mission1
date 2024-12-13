@@ -21,7 +21,7 @@ ext_dr = Motor(Port.A)
 ext_st = Motor(Port.D)
 robot = DriveBase(left_wheel, right_wheel, wheel_diameter = 50, axle_track = 110)
 gyro = GyroSensor(Port.S3)
-#color1 = ColorSensor(Port.S1)
+color1 = ColorSensor(Port.S1)
 color2 = ColorSensor(Port.S2)
 
 
@@ -69,7 +69,7 @@ def Forward(distance, speed):
     robot.stop()
     left_wheel.brake()
     right_wheel.brake()
-    robot.reset()
+    robot.reset()           #reset sa nu fie probleme (oare chiar e nevoie?)
     gyro.reset_angle(0)
 
 
@@ -78,7 +78,7 @@ ev3.speaker.beep()
 gyro.reset_angle(0)
 robot.reset()
 
-t1 = threading.Thread(target = Forward, args = (100, 150))
+t1 = threading.Thread(target = Forward, args = (100, 150))            #threading dar nu prea merge si oricum nu ne trebuie :)
 t2 = threading.Thread(target = ext_st.run_angle, args = (500, 360))
 
 
