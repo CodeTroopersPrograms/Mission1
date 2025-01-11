@@ -1,17 +1,11 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick
-from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor,
-                                 InfraredSensor, UltrasonicSensor, GyroSensor)
+from pybricks.ev3devices import Motor, TouchSensor, ColorSensor, InfraredSensor, UltrasonicSensor, GyroSensor
 from pybricks.parameters import Port, Stop, Direction, Button, Color
 from pybricks.tools import wait, StopWatch, DataLog
 from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
 import threading
-
-
-# This program requires LEGO EV3 MicroPython v2.0 or higher.
-# Click "Open user guide" on the EV3 extension tab for more information.
-
 
 # Create your objects here.
 ev3 = EV3Brick()
@@ -19,110 +13,205 @@ left_wheel = Motor(Port.C)
 right_wheel = Motor(Port.B)
 ext_dr = Motor(Port.D)
 ext_st = Motor(Port.A)
-robot = DriveBase(left_wheel, right_wheel, wheel_diameter = 50, axle_track = 110)
+robot = DriveBase(left_wheel, right_wheel, wheel_diameter=50, axle_track=110)
 gyro = GyroSensor(Port.S3)
-color1 = ColorSensor(Port.S1)
-color2 = ColorSensor(Port.S2)
+#color1 = ColorSensor(Port.S1)
+#color2 = ColorSensor(Port.S2)
 
 buttonDown = Button.DOWN
 buttonUp = Button.UP
 buttonCenter = Button.CENTER
 
 
+# Functions
 
-#Settings
+def resetAngles():
+    gyro.reset_angle(0)
+    left_wheel.reset_angle(0)
+    right_wheel.reset_angle(0)
 
-robot.settings(550, 550, 180, 180)
+def screenct(contor):
+    if(contor == 1):
+        ev3.screen.print("  **")
+        ev3.screen.print(" * *")
+        ev3.screen.print("*  *")
+        ev3.screen.print("   *")
+        ev3.screen.print("   *")
+        ev3.screen.print("   *")
+    if(contor==2):
+        ev3.screen.print("2")
 
-
-
-#Functions
-
-def get_filtered_angle(gyro, samples = 3):
+def get_filtered_angle(gyro, samples=3):
     angles = []
     for _ in range(samples):
         angles.append(gyro.angle())
     return sum(angles) / len(angles)
 
 
-
 def Turn(degrees):
-    gyro.reset_angle(0)
 
     while True:
-        # Obtine unghiul filtrat
+        # Get filtered angle
         filter_angle = get_filtered_angle(gyro)
         
-        # Calculeaza eroarea
+        # Calculate error
         error = filter_angle - degrees
         
-        # Opreste cand ajunge la unghiul dorit
+        # Stop when close enough to target angle
         if abs(error) < 2:
             robot.stop()
             break
         
-        # Ajusteaza viteza
+        # Adjust speed based on error
         turn_speed = error * 3
-        robot.drive(0, turn_speed)  # Ajusteaza rotirea bazat pe eroare
+        robot.drive(0, turn_speed)  # Adjust turning speed based on error
+    print(gyro.angle())
+    resetAngles()
+    print(gyro.angle())
 
-    gyro.reset_angle(0)
+
+def TurnNew(degrees):
+    resetAngles()
     
+    Kp = 3.0
+    Ki = 0.0
+    Kd = 1.0
+
+    # Initialize PID variables
+    integral = 0.0
+    last_error = 0.0
+    integral_limit = 1000.0  # Prevent integral from getting too large
+
+    while True:
+        # Get filtered angle
+        filter_angle = get_filtered_angle(gyro)
+        
+        # Calculate error (current position - target)
+        # Note: If you want the robot to turn positive when error is positive,
+        # or the opposite direction, you may invert this calculation as needed.
+        error = filter_angle - degrees
+
+
+        # Check if we are close enough to target
+        if abs(error) < 2:
+            robot.stop()
+            break
+        
+        # Calculate integral (accumulated error)
+        integral += error
+        # Prevent integral windup
+        if integral > integral_limit:
+            integral = integral_limit
+        elif integral < -integral_limit:
+            integral = -integral_limit
+
+        # Calculate derivative (change in error)
+        derivative = error - last_error
+
+        # Compute PID output
+        turn_speed = (Kp * error) + (Ki * integral) + (Kd * derivative)
+
+        # Apply the turn speed to the robot
+        # drive() takes speed and steering; here speed=0 and steering=turn_speed
+        robot.drive(0, turn_speed)
+
+        # Update last_error for the next iteration
+        last_error = error
+
+        # Optional small delay to stabilize loop timing
+        wait(10)
+
+    # Reset angle after completing the turn, if desired
+    resetAngles()
+
 def Forward(distance, speed):
-    while abs(robot.distance()) <= distance:
+    initial_distance = robot.distance()
+
+    while abs(robot.distance() - initial_distance) < distance:
         robot.drive(speed, 0)
 
     robot.stop()
     left_wheel.brake()
     right_wheel.brake()
-    robot.reset()
-    gyro.reset_angle(0)
 
 
 def run1():
     ext_st.hold()
-    Forward(100,300)
+    Forward(100, 300)
     Turn(-55)
     Forward(350, 300)
     wait(500)
-    Forward(150,-300)
-    Turn(45)
+    Forward(150, -300)
+    Turn(56)
     ext_dr.run_angle(500, -320)
-    Forward(350,250)
+    Forward(425, 250)                                                                                                                                                                                                                                   
     Turn(50)
-    Forward(80, 300)
+    Forward(45, 300)
     ext_dr.run_angle(500, 320)
-    Forward(45, -300)
-    Turn(140) 
-    Forward(300, -200)
-    Forward(125, 300)
-    Turn(85)
+    Forward(30, -300)
+    Turn(140)
+    Forward(200, -200)
+    Forward(150, 300)
+    Turn(70)
     Forward(650, 300)
     Turn(20)
     Forward(200, 300)
-
     ext_dr.run_angle(500, -320)
-    Turn(-20)
-    Forward(180, 300)
-    Turn(-50)
-    Forward(50, 300)
-    Turn(30)
+    Turn(-25)
+    Forward(260, 300)
+    Turn(-65)
+    Forward(450, 300)
 
-
+def run1_testFunc():
+    ext_st.hold()
+    Forward(95, 300)
+    TurnNew(-55)
+    Forward(350, 300)
+    wait(500)
+    Forward(150, -300)
+    TurnNew(40)
+    ext_dr.run_angle(500, -320)
+    Forward(400, 250)                                                                                                                                                                                                                                   
+    TurnNew(50)
+    Forward(45, 300)
+    ext_dr.run_angle(500, 320)
+    Forward(30, -300) 
+    TurnNew(140)
+    Forward(230, -200)
+    Forward(155, 300)
+    TurnNew(85)
+    Forward(650, 1000)
+    TurnNew(30)
+    Forward(185, 200)
+    TurnNew(-35)
+    ext_dr.run_angle(500, -320)
+    Forward(200, 150)
+    ext_dr.run_angle(500, 360)
+    TurnNew(-60)
+    Forward(550, 350)
 
 def run2():
-    Forward(200, 300)
+    Forward(250, 300)
+    Turn(45)    
+    Forward(150, 250)
+    Turn(-45)
+    Forward(150, 250)
+    Turn(-90)
+    Forward(200, 100)
+    ext_dr.run_angle(450, 320)
 
-# Write your program here.
+def curatare():
+    while True:
+        Forward(1000,200)
+        
+
+# Main program loop
 ev3.speaker.beep()
-gyro.reset_angle(0)
-robot.reset()
-
-#t1 = threading.Thread(target = Forward, args = (100, 150))
-#t2 = threading.Thread(target = ext_st.run_angle, args = (500, 360))
+resetAngles()
+print(gyro.angle())
 
 contor = 0
 canSwitch = True
-
 
 while True:
     if canSwitch:
@@ -130,22 +219,30 @@ while True:
             if i == buttonUp:
                 contor += 1
                 ev3.screen.print(contor)
-                wait(500)
+                wait(500)  # wait after button press
                 break
             elif i == buttonDown and contor > 0:
                 contor -= 1
                 ev3.screen.print(contor)
-                wait(500)
+                wait(500)  # wait after button press
                 break    
             elif i == buttonCenter:
                 canSwitch = False
                 break    
 
-    if contor == 1 and canSwitch == False:
+    if contor == 1 and not canSwitch:
         wait(500)
-        run1()    
+        run1_testFunc()
         canSwitch = True
-    elif contor == 2 and canSwitch == False:
+    elif contor == 2 and not canSwitch:
         wait(500)
         run2()
-        canSwitch = True                
+        canSwitch = True
+    elif contor == 3 and not canSwitch:
+        wait(500)
+        run1()
+        canSwitch = True    
+    elif contor == 5 and not canSwitch:
+        wait(500)
+        curatare()
+        canSwitch = True
