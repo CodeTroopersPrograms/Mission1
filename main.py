@@ -7,6 +7,7 @@ from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import SoundFile, ImageFile
 import threading
 
+
 # Create your objects here.
 ev3 = EV3Brick()
 left_wheel = Motor(Port.C)
@@ -138,18 +139,18 @@ def Forward(distance, speed):
 def run1():
     ext_st.hold()
     Forward(100, 300)
-    Turn(-55)
+    TurnNew(-55)
     Forward(350, 300)
     wait(500)
-    Forward(150, -300)
-    Turn(56)
+    Forward(145, -300)
+    TurnNew(54)
     ext_dr.run_angle(500, -320)
     Forward(425, 250)                                                                                                                                                                                                                                   
-    Turn(50)
+    TurnNew(50)
     Forward(45, 300)
     ext_dr.run_angle(500, 320)
     Forward(30, -300)
-    Turn(140)
+    TurnNew(140)
     Forward(200, -200)
     Forward(150, 300)
     Turn(70)
@@ -169,41 +170,58 @@ def run1_testFunc():
     Forward(350, 300)
     wait(500)
     Forward(150, -300)
-    TurnNew(40)
+    TurnNew(43)
     ext_dr.run_angle(500, -320)
     Forward(400, 250)                                                                                                                                                                                                                                   
-    TurnNew(50)
+    TurnNew(45)
     Forward(45, 300)
     ext_dr.run_angle(500, 320)
     Forward(30, -300) 
     TurnNew(140)
     Forward(230, -200)
     Forward(155, 300)
-    TurnNew(85)
+    TurnNew(83)
     Forward(650, 1000)
     TurnNew(30)
     Forward(185, 200)
-    TurnNew(-35)
+    TurnNew(-45)
     ext_dr.run_angle(500, -320)
-    Forward(200, 150)
+    Forward(250, 200)
     ext_dr.run_angle(500, 360)
-    TurnNew(-60)
+    Forward(50, 150)
+    TurnNew(-50)
     Forward(550, 350)
 
 def run2():
-    Forward(250, 300)
-    Turn(45)    
-    Forward(150, 250)
-    Turn(-45)
-    Forward(150, 250)
-    Turn(-90)
-    Forward(200, 100)
-    ext_dr.run_angle(450, 320)
+    t1 = threading.Thread(target = (ext_st.run_angle), args = (700, -700))
+    t2 = threading.Thread(target = (ext_dr.run_angle), args = (700, -400))
 
-def curatare():
-    while True:
-        Forward(1000,200)
-        
+    Forward(250, 300)
+    TurnNew(45)    
+    Forward(155, 250)
+    TurnNew(-45)
+    Forward(120, 250)
+    TurnNew(-93)
+    #ext_st.run_angle(200, 200)
+    Forward(165, 200)
+    #TurnNew(-5)
+
+    ext_dr.run_angle(700, -400)
+    #t1.start()
+    #t2.start()
+
+
+def run3():
+    Forward(300, 300)
+    TurnNew(30)
+    Forward(100, 300)
+    TurnNew(-30)
+    Forward(200, 300)
+    ext_dr.run_angle(200, 150)
+    Turn(-35)
+    ext_dr.run_angle(700, -300)
+    #Forward(50, 300)
+           
 
 # Main program loop
 ev3.speaker.beep()
@@ -212,6 +230,9 @@ print(gyro.angle())
 
 contor = 0
 canSwitch = True
+
+left_wheel.hold()
+right_wheel.hold()
 
 while True:
     if canSwitch:
@@ -240,9 +261,5 @@ while True:
         canSwitch = True
     elif contor == 3 and not canSwitch:
         wait(500)
-        run1()
+        run3()
         canSwitch = True    
-    elif contor == 5 and not canSwitch:
-        wait(500)
-        curatare()
-        canSwitch = True
