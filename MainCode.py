@@ -136,7 +136,7 @@ def TurnNew(target_angle, Kp=4.0, Ki=0.0, Kd=1.5, integral_limit=200.0):
         # Sleep to avoid overloading the loop
         time.sleep(0.02)  # Update every 20ms for smoother control
 
-def TurnNew_final(degrees, Kp=4.0, Ki=0.0, Kd=1.5):
+def TurnNew_final(degrees, Kp=4.0, Ki=0.015, Kd=1.5):
     resetAngles()
 
     time.sleep(0.1)
@@ -156,7 +156,7 @@ def TurnNew_final(degrees, Kp=4.0, Ki=0.0, Kd=1.5):
         error = degrees - current_angle
 
         # Check if we are close enough to the target
-        if abs(error) < 1:  # Tighter stopping threshold for better accuracy
+        if abs(error) < 0.3:  # Tighter stopping threshold for better accuracy
             robot.stop()
             break
 
@@ -197,11 +197,13 @@ def Forward_final(distance, speed, stopping_margin=2):
     target_distance = distance - stopping_margin  # Stop slightly earlier
 
     while abs(robot.distance() - initial_distance) < target_distance:
-        robot.drive(speed, 0)
+        error = 0 - gyro.angle()
+        robot.drive(speed, error)
 
     # Gradual slowing before stopping
     while abs(robot.distance() - initial_distance) < distance:
-        robot.drive(speed * 0.2, 0)
+        error = 0 - gyro.angle()
+        robot.drive(speed * 0.2, error)
         time.sleep(0.01)  # Allow time for motor update
 
     robot.stop()
@@ -210,27 +212,28 @@ def Forward_final(distance, speed, stopping_margin=2):
 
 def run1(progression=0):
     if(progression == 0):
-        Forward_final(30, 300)
+        Forward_final(20, 300)
         TurnNew_final(-55)
-        Forward_final(350, 300)
+        Forward_final(375, 300)
         Forward_final(400, -300)
     elif (progression == 1):
         Forward_final(500, -300)
         TurnNew_final(40)
-        Forward_final(100, -300)
+        Forward_final(150, -300)
         wait(100)
-        Forward_final(150, 300)
+        Forward_final(200 , 300)
         TurnNew_final(-55)
-        Forward_final(450, 250)
+        Forward_final(460, 250)
     elif(progression == 2):
-        Forward_final(475, -300)
-        TurnNew_final(18)
-        Forward_final(500, -150)
+        Forward_final(520, 300)
+        TurnNew_final(88)
+        Forward_final(650, -300)
+        TurnNew_final(30)
+        Forward_final(140, -300)
+        TurnNew_final(-47)
+        Forward_final(350, -300)
         TurnNew_final(-45)
-        Forward_final(90, -250)
-        TurnNew_final(-5)
-        Forward_final(200, -300)
-        TurnNew_final(-45)
+        Forward_final(500, -300)
     
 
 def run1_test():
