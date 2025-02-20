@@ -49,7 +49,7 @@ def get_filtered_angle(gyro, samples=5):
     for _ in range(samples):
         angles.append(gyro.angle())
         time.sleep(0.02)
-    return sum(angles) / len(angles)
+    return sum(angles) / len(   angles)
 
 
 def Turn(degrees):
@@ -136,16 +136,15 @@ def TurnNew(target_angle, Kp=4.0, Ki=0.0, Kd=1.5, integral_limit=200.0):
         # Sleep to avoid overloading the loop
         time.sleep(0.02)  # Update every 20ms for smoother control
 
-def TurnNew_final(degrees, Kp=4.0, Ki=0.015, Kd=1.5):
+def TurnNew_final(degrees, Kp=4.0, Ki=0.01, Kd=2.5):
     resetAngles()
 
     time.sleep(0.1)
 
-
     # Initialize PID variables
     integral = 0.0
     last_error = 0.0
-    integral_limit = 200.0  # Lower limit to avoid integral windup
+    integral_limit = 100.0  # Lower limit to avoid integral windup
 
     while True:
         # Get the current gyro angle
@@ -160,15 +159,24 @@ def TurnNew_final(degrees, Kp=4.0, Ki=0.015, Kd=1.5):
             robot.stop()
             break
 
+        if abs(error) < 5:
+            integral *= 0.9
+
+
         # Calculate PID terms
         integral += error
         integral = max(min(integral, integral_limit), -integral_limit)
 
         derivative = error - last_error
-        turn_speed = (Kp * error) + (Ki * integral) + (Kd * derivative)
+        dynamic_kp = Kp
+
+        if abs(error) < 5:
+            dynamic_kp *= 0.5
+
+        turn_speed = (dynamic_kp * error) + (Ki * integral) + (Kd * derivative)
 
         # Clamp turn speed to ensure smooth and accurate turns
-        turn_speed = max(min(turn_speed, 100), -100)  # Lowered max speed for fine adjustments
+        turn_speed = max(min(turn_speed, 60), -60)  # Lowered max speed for fine adjustments
 
         # Apply the turn speed to the robot
         robot.drive(0, turn_speed)
@@ -226,11 +234,11 @@ def run1(progression=0):
         Forward_final(460, 250)
     elif(progression == 2):
         Forward_final(520, 300)
-        TurnNew_final(88)
-        Forward_final(650, -300)
-        TurnNew_final(30)
+        TurnNew_final(90)
+        Forward_final(600, -300)
+        TurnNew_final(45)
         Forward_final(140, -300)
-        TurnNew_final(-47)
+        TurnNew_final(-34)
         Forward_final(350, -300)
         TurnNew_final(-45)
         Forward_final(500, -300)
@@ -264,36 +272,37 @@ def run1_test():
 
 def run2():
     a = 50
-    Forward_final(350, 250)
+    Forward_final(330, 250)
     wait(100)
-    ext_st.run_angle(10, 10)
-    for i in range(0, 5):
-        ext_st.run_angle(20, 10)
+    ext_st.run_angle(10, 10 )
+    for i in range(0, 3):
+        ext_st.run_angle(20, 20)
         Forward_final(3, 20)
     #ext_dr.run_angle(50, 80)
     #ext_st.run_angle(50, 57) 
     #Forward_final(20, 15)
     ext_st.run_angle(30, -20)
     wait(100)
+    ext_st.run_angle(30, 30)
     Forward_final(50, -300)
     TurnNew_final(90)
     ext_st.run_angle(70, 40)
-    Forward_final(245, 250)
+    Forward_final(235, 250)
     TurnNew_final(-90)
-    Forward_final(225 , 250)
-    TurnNew_final(-82)
+    Forward_final(300 , 250)
+    TurnNew_final(-91)
     #ext_dr.run_angle(75, -60)
     wait(100)
     Forward_final(200, 100)
     ext_dr.run_angle(10, 35)
     Forward_final(100, -150)
-    TurnNew_final(96)
+    TurnNew_final(108)
     wait(500)
-    ext_dr.run_angle(50, -15)
-    Forward_final(150, 250)
+    ext_dr.run_angle(50, -205)
+    Forward_final(175, 250)
     ext_dr.run_angle(50, -15)
     wait(1000)
-    Forward_final(1000, -1000)
+    Forward_final(800, -1000)
 
 def run2_test():
     a = 50
@@ -306,9 +315,10 @@ def run2_test():
     #ext_dr.run_angle(50, 80)
     #ext_st.run_angle(50, 57) 
     #Forward_final(20, 15)
-    ext_st.run_angle(30, -20)
+    ext_st.run_angle(30, -45)
     wait(100)
     Forward_final(50, -300)
+    
     TurnNew(90)
     ext_st.run_angle(70, 40)
     Forward_final(275, 250)
@@ -328,40 +338,58 @@ def run2_test():
     wait(1000)
     Forward_final(350, -1000)
 
-def run3():
-    ext_dr.run_angle(100, -50)
-    Forward_final(225, 1000)
-    TurnNew_final(60)
-    Forward_final(235, 500)
-    TurnNew_final(-57)
-    Forward_final(300, 1000)
-    ext_dr.run_angle(200, 80)
-    ext_dr.run_angle(200, -45)
-    wait(100)
-    TurnNew_final(-40)
-    ext_dr.run_angle(200, -75)
-    Forward_final(100, 500)
-    TurnNew_final(30)
-    Forward_final(100, -250)
-    TurnNew_final(20)
-    Forward_final(200, -500)
-    ext_dr.run_angle(200, 80)
-    TurnNew_final(60)
-    Forward_final(125, 500)
-    ext_dr.run_angle(50 , -47)
+def run3(progression2 = 0):
+    if (progression2 == 0):
+        ext_st.run_angle(100, -40)
+        Forward_final(700, 500)
+        TurnNew_final(-40)
+        ext_st.run_angle(100, 90)
+        Forward_final(50, -500)
+        ext_st.run_angle(100, -110)
+        TurnNew_final(103)
+        Forward_final (15, 500)
+        ext_st.run_angle(100, 120)
+        wait(100)
+        ext_st.run_angle(100, -120)
+        Forward_final(50, -500)
+        TurnNew_final(-60) 
+        Forward_final(700, -500)
+    if (progression2 == 1):
+        Forward_final(430, 350)
+        TurnNew_final(100)
+        ext_st.run_angle(100, 80)
+        Forward_final(140, 100)
+        ext_st.run_angle(70, -80)
+        Forward_final(120, -350)
+        TurnNew_final(-100)
+        Forward_final(450, -500)
 
 
-def run4():
-    TurnNew(90)
-    wait(100)
-    TurnNew(30)
-    TurnNew(-180)
-    TurnNew(360)
-    
+
+def run4(rogression3 = 0):
+    if (progression3 == 0):
+        Forward_final(100, 250)
+        TurnNew_final(72)
+        Forward_final(475, 250)
+        ext_st.run_angle(100, -80)
+        Forward_final(490, -250)
+    if (progression3 == 1):
+        Forward_final(800, 350)
+        ext_dr.run_angle(50, 100)
+        Forward_final(140 , -250)
+        ext_dr.run_angle(100, -200)
+        TurnNew_final(-30)
+        Forward_final(150, 250)
+        TurnNew_final(50)
+        Forward_final(575, 250)
     
 
 def run5():
-   Forward_final (250 , 300)
+    #ext_dr.run_angle(100, 130)
+    Forward_final(275 , 200)
+    TurnNew_final(-10)
+    Forward_final(400 , 200)
+    ext_dr.run_angle(100, -200)
 
 def washing_tires():
     while(True):
@@ -376,6 +404,8 @@ print(gyro.angle())
 
 contor = 0
 progression = 0
+progression2 = 0
+progression3 = 0
 canSwitch = True
 
 left_wheel.hold()
@@ -405,15 +435,17 @@ while True:
         canSwitch = True
     elif contor == 2 and not canSwitch:
         wait(500)
-        run2_test()
+        run2()
         canSwitch = True
     elif contor == 3 and not canSwitch:
         wait(500)
-        run3()
+        run3(progression2)
+        progression2 += 1
         canSwitch = True
     elif contor == 4 and not canSwitch:
         wait(500)
-        run4()
+        run4(progression3)
+        progression3 += 1
         canSwitch = True
 
     elif contor == 5 and not canSwitch:
